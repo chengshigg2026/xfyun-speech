@@ -1,0 +1,7 @@
+{
+  "name": "xfyun-speech-api",
+  "version": "1.0.0",
+  "description": "科大讯飞语音评测云端API",
+  "main": "api/evaluate.js",
+  "dependencies": {}
+}
