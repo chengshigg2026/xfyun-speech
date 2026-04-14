@@ -1,6 +1,5 @@
 /**
  * 科大讯飞语音评测 API - Vercel Serverless Function
- * 部署到 Vercel 后可直接调用
  */
 
 const crypto = require('crypto');
@@ -40,22 +39,20 @@ const corsHeaders = {
     'Content-Type': 'application/json'
 };
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
     // 处理 OPTIONS 预检请求
     if (req.method === 'OPTIONS') {
-        res.writeHead(200, corsHeaders);
-        res.end();
+        res.status(200).set(corsHeaders).end();
         return;
     }
 
     // 健康检查
     if (req.method === 'GET') {
-        res.writeHead(200, corsHeaders);
-        res.end(JSON.stringify({ 
+        res.status(200).set(corsHeaders).json({ 
             status: 'ok', 
             service: '科大讯飞语音评测API',
             timestamp: new Date().toISOString()
-        }));
+        });
         return;
     }
 
@@ -66,32 +63,27 @@ export default async function handler(req, res) {
             const { audio, text } = body;
 
             if (!audio || !text) {
-                res.writeHead(400, corsHeaders);
-                res.end(JSON.stringify({ error: '缺少音频或文本参数' }));
+                res.status(400).set(corsHeaders).json({ error: '缺少音频或文本参数' });
                 return;
             }
 
             // 生成鉴权URL
             const wsUrl = generateAuthUrl();
             
-            // 由于 Vercel Serverless 不支持 WebSocket 长连接
-            // 我们返回鉴权URL，让前端直接连接科大讯飞
-            res.writeHead(200, corsHeaders);
-            res.end(JSON.stringify({
+            // 返回鉴权URL，让前端直接连接科大讯飞
+            res.status(200).set(corsHeaders).json({
                 wsUrl: wsUrl,
                 appId: XFYUN_CONFIG.appId,
                 text: text,
                 audio: audio
-            }));
+            });
 
         } catch (error) {
             console.error('API错误:', error);
-            res.writeHead(500, corsHeaders);
-            res.end(JSON.stringify({ error: error.message }));
+            res.status(500).set(corsHeaders).json({ error: error.message });
         }
         return;
     }
 
-    res.writeHead(405, corsHeaders);
-    res.end(JSON.stringify({ error: 'Method not allowed' }));
-}
+    res.status(405).set(corsHeaders).json({ error: 'Method not allowed' });
+};
