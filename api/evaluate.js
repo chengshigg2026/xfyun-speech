@@ -31,29 +31,24 @@ function generateAuthUrl() {
     return url;
 }
 
-// CORS 头
-const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json'
-};
-
 module.exports = async function handler(req, res) {
+    // 设置CORS头
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
     // 处理 OPTIONS 预检请求
     if (req.method === 'OPTIONS') {
-        res.status(200).set(corsHeaders).end();
-        return;
+        return res.status(200).end();
     }
 
     // 健康检查
     if (req.method === 'GET') {
-        res.status(200).set(corsHeaders).json({ 
+        return res.status(200).json({ 
             status: 'ok', 
             service: '科大讯飞语音评测API',
             timestamp: new Date().toISOString()
         });
-        return;
     }
 
     // POST 评测请求
@@ -63,15 +58,14 @@ module.exports = async function handler(req, res) {
             const { audio, text } = body;
 
             if (!audio || !text) {
-                res.status(400).set(corsHeaders).json({ error: '缺少音频或文本参数' });
-                return;
+                return res.status(400).json({ error: '缺少音频或文本参数' });
             }
 
             // 生成鉴权URL
             const wsUrl = generateAuthUrl();
             
             // 返回鉴权URL，让前端直接连接科大讯飞
-            res.status(200).set(corsHeaders).json({
+            return res.status(200).json({
                 wsUrl: wsUrl,
                 appId: XFYUN_CONFIG.appId,
                 text: text,
@@ -80,10 +74,9 @@ module.exports = async function handler(req, res) {
 
         } catch (error) {
             console.error('API错误:', error);
-            res.status(500).set(corsHeaders).json({ error: error.message });
+            return res.status(500).json({ error: error.message });
         }
-        return;
     }
 
-    res.status(405).set(corsHeaders).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: 'Method not allowed' });
 };
